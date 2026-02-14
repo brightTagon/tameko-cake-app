@@ -83,6 +83,19 @@ button:hover {
     font-weight: bold;
     text-align: center;
 }
+
+.preview {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.preview img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 10px;
+    display: none;
+}
 </style>
 </head>
 
@@ -96,11 +109,16 @@ button:hover {
     <h2>สั่งขนมของคุณ</h2>
 
     <label>เลือกเซต</label>
-    <select id="setSelect" onchange="updateCategory(); calculateTotal();">
+    <select id="setSelect" onchange="updateCategory(); updateImage(); calculateTotal();">
         <option value="25">Set A - 25 บาท</option>
         <option value="30">Set B - 30 บาท</option>
         <option value="35">Set C - 35 บาท</option>
     </select>
+
+    <!-- IMAGE PREVIEW -->
+    <div class="preview">
+        <img id="setImage" src="" alt="Bakery Set Image">
+    </div>
 
     <label>เลือกประเภท</label>
     <select id="categorySelect" onchange="updateItems()">
@@ -134,6 +152,23 @@ const categorySelect = document.getElementById("categorySelect");
 const itemSelect = document.getElementById("itemSelect");
 const quantity = document.getElementById("quantity");
 const total = document.getElementById("total");
+const setImage = document.getElementById("setImage");
+
+function updateImage() {
+    const setValue = setSelect.value;
+
+    if (setValue == "25") {
+        setImage.src = "static/A.jfif";
+    } 
+    else if (setValue == "30") {
+        setImage.src = "static/B.jfif";
+    } 
+    else if (setValue == "35") {
+        setImage.src = "static/C.jfif";
+    }
+
+    setImage.style.display = "block";
+}
 
 function updateCategory() {
     const setValue = setSelect.value;
@@ -222,6 +257,7 @@ function submitOrder() {
 }
 
 updateCategory();
+updateImage();
 calculateTotal();
 </script>
 
