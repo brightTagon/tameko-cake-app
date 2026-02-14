@@ -77,24 +77,33 @@ button:hover {
     color: #d63384;
 }
 
-.success {
-    color: green;
-    margin-top: 15px;
-    font-weight: bold;
-    text-align: center;
-}
-
-.preview {
-    margin-top: 15px;
-    text-align: center;
-}
-
 .preview img {
     width: 100%;
     max-height: 220px;
     object-fit: cover;
     border-radius: 10px;
-    display: none;
+    margin-top: 10px;
+}
+
+.qr-section {
+    margin-top: 20px;
+    text-align: center;
+    background: #fff6f8;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.qr-section img {
+    width: 200px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.success {
+    color: green;
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
 }
 </style>
 </head>
@@ -109,30 +118,35 @@ button:hover {
     <h2>สั่งขนมของคุณ</h2>
 
     <label>เลือกเซต</label>
-    <select id="setSelect" onchange="updateCategory(); updateImage(); calculateTotal();">
+    <select id="setSelect">
         <option value="25">Set A - 25 บาท</option>
         <option value="30">Set B - 30 บาท</option>
         <option value="35">Set C - 35 บาท</option>
     </select>
 
-    <!-- IMAGE PREVIEW -->
+    <!-- IMAGE -->
     <div class="preview">
-        <img id="setImage" src="" alt="Bakery Set Image">
+        <img id="setImage" src="">
     </div>
 
     <label>เลือกประเภท</label>
-    <select id="categorySelect" onchange="updateItems()">
-        <option value="">-</option>
-    </select>
+    <select id="categorySelect"></select>
 
     <label>เลือกเมนู</label>
     <select id="itemSelect"></select>
 
     <label>จำนวน</label>
-    <input type="number" id="quantity" value="1" min="1" oninput="calculateTotal()">
+    <input type="number" id="quantity" value="1" min="1">
 
     <div class="total">
         ราคารวม: <span id="total">25</span> บาท
+    </div>
+
+    <!-- QR -->
+    <div class="qr-section">
+        <h3>📲 สแกนเพื่อชำระเงิน</h3>
+        <img src="static/qrcode.jfif" alt="QR Code">
+        <p>กรุณาสแกน QR และอัปโหลดสลิปด้านล่าง</p>
     </div>
 
     <label>ที่อยู่จัดส่ง</label>
@@ -155,33 +169,26 @@ const total = document.getElementById("total");
 const setImage = document.getElementById("setImage");
 
 function updateImage() {
-    const setValue = setSelect.value;
-
-    if (setValue == "25") {
+    if (setSelect.value == "25") {
         setImage.src = "static/A.jfif";
-    } 
-    else if (setValue == "30") {
+    } else if (setSelect.value == "30") {
         setImage.src = "static/B.jfif";
-    } 
-    else if (setValue == "35") {
+    } else {
         setImage.src = "static/C.jfif";
     }
-
-    setImage.style.display = "block";
 }
 
 function updateCategory() {
-    const setValue = setSelect.value;
     categorySelect.innerHTML = "";
     itemSelect.innerHTML = "";
 
-    if (setValue == "30") {
+    if (setSelect.value == "30") {
         categorySelect.innerHTML = `
             <option value="b1">B.1 เค้กหน้านิ่ม</option>
             <option value="b2">B.2 ขนมปัง</option>
         `;
     }
-    else if (setValue == "35") {
+    else if (setSelect.value == "35") {
         categorySelect.innerHTML = `
             <option value="c1">C.1 ขนมไข่ไส้ครีม 2 ชิ้น</option>
             <option value="c2">C.2 เค้กไข่ 2 ชิ้น</option>
@@ -189,8 +196,7 @@ function updateCategory() {
             <option value="c4">C.4 เค้กหน้านิ่ม 1 ชิ้น + ขนมปัง 1 ชิ้น</option>
             <option value="c5">C.5 เค้กหน้านิ่ม + เค้กไข่</option>
         `;
-    }
-    else {
+    } else {
         categorySelect.innerHTML = `<option value="">-</option>`;
     }
 
@@ -198,34 +204,35 @@ function updateCategory() {
 }
 
 function updateItems() {
-    const setValue = setSelect.value;
-    const categoryValue = categorySelect.value;
     itemSelect.innerHTML = "";
     let options = [];
 
-    if (setValue == "25") {
+    if (setSelect.value == "25") {
         options = [
             "เค้กไข่เนยสด",
             "เค้กไข่ช็อคชิพ",
             "เค้กไข่กล้วยหอม ช็อคชิพอัลมอน"
         ];
     }
-    else if (setValue == "30") {
-        if (categoryValue == "b1") {
+    else if (setSelect.value == "30") {
+        if (categorySelect.value == "b1") {
             options = ["ส้ม","ชอคโกแลต","ฝอยทอง","สตอเบอรี่","คละรส"];
-        }
-        else if (categoryValue == "b2") {
+        } else if (categorySelect.value == "b2") {
             options = ["ไก่หยอง","ไส้กรอก","ถั่วแดง","เผือก","ถั่วดำ"];
         }
     }
-    else if (setValue == "35") {
-        options = ["เลือกตามรายการ C ที่เลือกด้านบน"];
+    else if (setSelect.value == "35") {
+        if (categorySelect.value == "c1") options = ["ขนมไข่ไส้ครีม 2 ชิ้น"];
+        if (categorySelect.value == "c2") options = ["เค้กไข่ 2 ชิ้น"];
+        if (categorySelect.value == "c3") options = ["เค้กไข่ 1 ชิ้น + ขนมปัง 1 ชิ้น"];
+        if (categorySelect.value == "c4") options = ["เค้กหน้านิ่ม 1 ชิ้น + ขนมปัง 1 ชิ้น"];
+        if (categorySelect.value == "c5") options = ["เค้กหน้านิ่ม + เค้กไข่"];
     }
 
     options.forEach(item => {
-        let option = document.createElement("option");
-        option.text = item;
-        itemSelect.add(option);
+        const option = document.createElement("option");
+        option.textContent = item;
+        itemSelect.appendChild(option);
     });
 }
 
@@ -249,12 +256,16 @@ function submitOrder() {
 
     document.getElementById("successMessage").innerText =
         "🎉 สั่งซื้อสำเร็จ! ขอบคุณที่อุดหนุนร้าน Sweet Bakery";
-
-    document.getElementById("location").value = "";
-    document.getElementById("paymentSlip").value = "";
-    quantity.value = 1;
-    calculateTotal();
 }
+
+setSelect.addEventListener("change", () => {
+    updateCategory();
+    updateImage();
+    calculateTotal();
+});
+
+categorySelect.addEventListener("change", updateItems);
+quantity.addEventListener("input", calculateTotal);
 
 updateCategory();
 updateImage();
