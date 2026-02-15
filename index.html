@@ -124,7 +124,6 @@ button:hover {
         <option value="35">Set C - 35 บาท</option>
     </select>
 
-    <!-- IMAGE -->
     <div class="preview">
         <img id="setImage" src="">
     </div>
@@ -142,7 +141,10 @@ button:hover {
         ราคารวม: <span id="total">25</span> บาท
     </div>
 
-    <!-- QR -->
+    <!-- DATE SELECTION -->
+    <label>เลือกวันที่รับสินค้า</label>
+    <input type="date" id="deliveryDate">
+
     <div class="qr-section">
         <h3>📲 สแกนเพื่อชำระเงิน</h3>
         <img src="static/qrcode.jfif" alt="QR Code">
@@ -167,6 +169,11 @@ const itemSelect = document.getElementById("itemSelect");
 const quantity = document.getElementById("quantity");
 const total = document.getElementById("total");
 const setImage = document.getElementById("setImage");
+const deliveryDate = document.getElementById("deliveryDate");
+
+// Prevent selecting past dates
+const today = new Date().toISOString().split("T")[0];
+deliveryDate.setAttribute("min", today);
 
 function updateImage() {
     if (setSelect.value == "25") {
@@ -243,6 +250,12 @@ function calculateTotal() {
 function submitOrder() {
     const location = document.getElementById("location").value;
     const paymentSlip = document.getElementById("paymentSlip").files[0];
+    const selectedDate = deliveryDate.value;
+
+    if (!selectedDate) {
+        alert("กรุณาเลือกวันที่รับสินค้า");
+        return;
+    }
 
     if (!location) {
         alert("กรุณากรอกที่อยู่จัดส่ง");
@@ -255,7 +268,7 @@ function submitOrder() {
     }
 
     document.getElementById("successMessage").innerText =
-        "🎉 สั่งซื้อสำเร็จ! ขอบคุณที่อุดหนุนร้าน Sweet Bakery";
+        "🎉 สั่งซื้อสำเร็จ! วันที่รับสินค้า: " + selectedDate + " ขอบคุณที่อุดหนุนร้าน Sweet Bakery";
 }
 
 setSelect.addEventListener("change", () => {
