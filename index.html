@@ -105,6 +105,17 @@ button:hover {
     font-weight: bold;
     text-align: center;
 }
+
+.urgent {
+    margin-top: 20px;
+    padding: 12px;
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    color: #856404;
+}
 </style>
 </head>
 
@@ -141,9 +152,16 @@ button:hover {
         ราคารวม: <span id="total">25</span> บาท
     </div>
 
-    <!-- DATE SELECTION -->
-    <label>เลือกวันที่รับสินค้า</label>
-    <input type="date" id="deliveryDate">
+    <!-- แสดงวันที่ -->
+    <div class="total">
+        วันที่สั่งซื้อ: <span id="orderDate"></span><br>
+        วันที่รับสินค้า: <span id="deliveryDate"></span>
+    </div>
+
+    <!-- ข้อความสินค้าเร่งด่วน -->
+    <div class="urgent">
+        🚨 หากต้องการสินค้าเร่งด่วน กรุณาโทร 086-789-4266
+    </div>
 
     <div class="qr-section">
         <h3>📲 สแกนเพื่อชำระเงิน</h3>
@@ -169,12 +187,24 @@ const itemSelect = document.getElementById("itemSelect");
 const quantity = document.getElementById("quantity");
 const total = document.getElementById("total");
 const setImage = document.getElementById("setImage");
-const deliveryDate = document.getElementById("deliveryDate");
 
-// Prevent selecting past dates
-const today = new Date().toISOString().split("T")[0];
-deliveryDate.setAttribute("min", today);
+// ===== วันที่ =====
+const today = new Date();
+const tomorrow = new Date();
+tomorrow.setDate(today.getDate() + 1);
 
+function formatDate(date) {
+    return date.toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
+}
+
+document.getElementById("orderDate").innerText = formatDate(today);
+document.getElementById("deliveryDate").innerText = formatDate(tomorrow);
+
+// ===== ระบบเดิม =====
 function updateImage() {
     if (setSelect.value == "25") {
         setImage.src = "static/A.jfif";
@@ -250,12 +280,6 @@ function calculateTotal() {
 function submitOrder() {
     const location = document.getElementById("location").value;
     const paymentSlip = document.getElementById("paymentSlip").files[0];
-    const selectedDate = deliveryDate.value;
-
-    if (!selectedDate) {
-        alert("กรุณาเลือกวันที่รับสินค้า");
-        return;
-    }
 
     if (!location) {
         alert("กรุณากรอกที่อยู่จัดส่ง");
@@ -268,7 +292,8 @@ function submitOrder() {
     }
 
     document.getElementById("successMessage").innerText =
-        "🎉 สั่งซื้อสำเร็จ! วันที่รับสินค้า: " + selectedDate + " ขอบคุณที่อุดหนุนร้าน Sweet Bakery";
+        "🎉 สั่งซื้อสำเร็จ!\nวันที่สั่ง: " + formatDate(today) +
+        "\nวันที่รับสินค้า: " + formatDate(tomorrow);
 }
 
 setSelect.addEventListener("change", () => {
