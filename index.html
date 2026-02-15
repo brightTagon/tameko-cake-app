@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sweet Bakery Shop</title>
     <style>
-        /* CSS คงเดิม เพิ่มการตกแต่งเล็กน้อย */
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(to right, #fff1eb, #ffe4e1); margin: 0; padding-bottom: 50px; }
         header { background: #068223; color: white; text-align: center; padding: 20px; font-size: 24px; }
         .container { width: 90%; max-width: 500px; margin: 30px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
@@ -21,7 +20,7 @@
         .qr-section { margin-top: 20px; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px dashed #ccc; }
         .qr-section img { width: 180px; border-radius: 5px; }
         .success { color: #155724; background: #d4edda; padding: 15px; border-radius: 8px; margin-top: 15px; font-weight: bold; white-space: pre-line; display: none; }
-        .urgent-tag { color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 10px; text-align: center; }
+        .info-tag { color: #856404; background: #fff3cd; padding: 10px; border-radius: 8px; font-size: 13px; margin-top: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -51,28 +50,23 @@
 
     <div class="total-box">
         <div class="total">ราคารวม: <span id="total">25</span> บาท</div>
-        <div style="font-size: 13px; color: #666; margin-top: 5px;">วันที่ทำรายการ: <span id="orderDate"></span></div>
+        <div style="font-size: 13px; color: #666; margin-top: 5px;">วันที่สั่งซื้อ: <span id="orderDate"></span></div>
     </div>
 
     <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
 
-    <label>📅 วันที่รับสินค้า</label>
-    <input type="date" id="deliveryDate">
+    <label>📅 วันที่รับสินค้า (รับเร็วสุดพรุ่งนี้)</label>
+    <input type="date" id="deliveryDate" onchange="filterTimeOptions()">
     
     <label>⏰ เวลารับสินค้า</label>
-    <select id="deliveryTime">
-        <option value="09:00 - 11:00">ช่วงเช้า (09:00 - 11:00)</option>
-        <option value="11:00 - 14:00">ช่วงเที่ยง (11:00 - 14:00)</option>
-        <option value="14:00 - 17:00">ช่วงบ่าย (14:00 - 17:00)</option>
-        <option value="17:00 - 19:00">ช่วงเย็น (17:00 - 19:00)</option>
-    </select>
-
-    <label>📝 หมายเหตุถึงร้านค้า (ถ้ามี)</label>
-    <textarea id="customerNote" placeholder="เช่น ไม่รับหวานเลย, เขียนหน้ากล่องว่า..., ฝากวางไว้ที่ป้อมยาม"></textarea>
-
-    <div class="urgent-tag">
-        💡 สั่งหลัง 08:00 น. จะรับได้เร็วสุดคือวันมะรืนครับ
+    <select id="deliveryTime"></select>
+    
+    <div class="info-tag" id="timeNotice">
+        💡 กรณีรับวันพรุ่งนี้ เริ่มรับได้หลัง 13:00 น. เป็นต้นไป
     </div>
+
+    <label>📝 หมายเหตุเพิ่มเติม</label>
+    <textarea id="customerNote" placeholder="ระบุรายละเอียดเพิ่มเติมถึงร้านค้า..."></textarea>
 
     <div class="qr-section">
         <h3>📲 สแกนชำระเงิน</h3>
@@ -99,39 +93,53 @@ const quantity = document.getElementById("quantity");
 const total = document.getElementById("total");
 const setImage = document.getElementById("setImage");
 const deliveryInput = document.getElementById("deliveryDate");
+const deliveryTimeSelect = document.getElementById("deliveryTime");
+const timeNotice = document.getElementById("timeNotice");
 
-// ===== 3. ตั้งค่าวันรับเร็วสุด (กฎพรุ่งนี้/มะรืน ตัดรอบ 8 โมง) =====
+// 1. ตั้งค่าวันรับเร็วสุดเป็น "พรุ่งนี้"
 const now = new Date();
-const currentHour = now.getHours();
-let minDate = new Date();
+const tomorrow = new Date();
+tomorrow.setDate(now.getDate() + 1);
+const minDateStr = tomorrow.toISOString().split("T")[0];
 
-if (currentHour < 8) {
-    // ก่อน 8 โมงเช้า -> พรุ่งนี้คือวันแรกที่รับได้
-    minDate.setDate(now.getDate() + 1);
-} else {
-    // หลัง 8 โมงเช้า -> ต้องเป็นวันมะรืน
-    minDate.setDate(now.getDate() + 2);
-}
-
-const minDateStr = minDate.toISOString().split("T")[0];
 deliveryInput.min = minDateStr;
 deliveryInput.value = minDateStr;
-
 document.getElementById("orderDate").innerText = now.toLocaleDateString("th-TH");
 
-// ===== ระบบจัดการข้อมูลสินค้า =====
+// ช่วงเวลาทั้งหมด
+const allTimeSlots = [
+    { label: "ช่วงเช้า (09:00 - 11:00)", value: "09:00 - 11:00", isAfternoon: false },
+    { label: "ช่วงเที่ยง (11:00 - 13:00)", value: "11:00 - 13:00", isAfternoon: false },
+    { label: "ช่วงบ่าย (13:00 - 15:00)", value: "13:00 - 15:00", isAfternoon: true },
+    { label: "ช่วงเย็น (15:00 - 17:00)", value: "15:00 - 17:00", isAfternoon: true },
+    { label: "ช่วงค่ำ (17:00 - 19:00)", value: "17:00 - 19:00", isAfternoon: true }
+];
+
+// ฟังก์ชันกรองเวลา (รับพรุ่งนี้ต้องหลัง 13:00)
+function filterTimeOptions() {
+    const selectedDate = deliveryInput.value;
+    deliveryTimeSelect.innerHTML = "";
+    const isTomorrow = (selectedDate === minDateStr);
+
+    allTimeSlots.forEach(slot => {
+        if (!isTomorrow || (isTomorrow && slot.isAfternoon)) {
+            let op = document.createElement("option");
+            op.value = slot.value;
+            op.textContent = slot.label;
+            deliveryTimeSelect.appendChild(op);
+        }
+    });
+    timeNotice.style.display = isTomorrow ? "block" : "none";
+}
+
 function updateUI() {
     const val = setSelect.value;
     setImage.src = `static/${val == "25" ? "A" : val == "30" ? "B" : "C"}.jfif`;
-    
     categorySelect.innerHTML = "";
     if (val == "30") {
         categorySelect.innerHTML = '<option value="b1">B.1 เค้กหน้านิ่ม</option><option value="b2">B.2 ขนมปัง</option>';
     } else if (val == "35") {
-        categorySelect.innerHTML = `
-            <option value="c1">C.1 ขนมไข่ไส้ครีม 2 ชิ้น</option>
-            <option value="c2">C.2 เค้กไข่ 2 ชิ้น</option>
-            <option value="c4">C.4 เค้กหน้านิ่ม + ขนมปัง</option>`;
+        categorySelect.innerHTML = '<option value="c1">C.1 ขนมไข่ไส้ครีม</option><option value="c2">C.2 เค้กไข่ 2 ชิ้น</option>';
     } else {
         categorySelect.innerHTML = '<option value="a1">เซตปกติ A</option>';
     }
@@ -141,7 +149,7 @@ function updateUI() {
 
 function updateItems() {
     itemSelect.innerHTML = "";
-    let items = (setSelect.value == "25") ? ["เค้กไข่เนยสด", "เค้กไข่ช็อคชิพ", "เค้กไข่กล้วยหอม"] : ["เมนูรวมตามเซตที่เลือก"];
+    let items = (setSelect.value == "25") ? ["เค้กไข่เนยสด", "เค้กไข่ช็อคชิพ", "เค้กไข่กล้วยหอม"] : ["เมนูรวมตามเซต"];
     items.forEach(it => {
         let op = document.createElement("option");
         op.textContent = it;
@@ -157,7 +165,6 @@ function submitOrder() {
     const location = document.getElementById("location").value;
     const slip = document.getElementById("paymentSlip").files[0];
     const note = document.getElementById("customerNote").value;
-    const time = document.getElementById("deliveryTime").value;
 
     if (!location || !slip) {
         alert("กรุณากรอกที่อยู่และแนบสลิปด้วยครับ");
@@ -168,15 +175,15 @@ function submitOrder() {
     successBox.style.display = "block";
     successBox.innerText = `🎉 สั่งซื้อสำเร็จ!
     วันที่รับ: ${new Date(deliveryInput.value).toLocaleDateString("th-TH")}
-    เวลา: ${time}
+    เวลา: ${deliveryTimeSelect.value}
     หมายเหตุ: ${note || "-"}
-    ระบบกำลังส่งข้อมูลไปที่ร้านค้า...`;
+    ระบบบันทึกข้อมูลเรียบร้อยแล้ว`;
     
-    // เลื่อนลงไปแสดงข้อความสำเร็จ
     successBox.scrollIntoView({ behavior: 'smooth' });
 }
 
-// เริ่มต้นหน้าจอ
+// เรียกทำงานตอนเริ่ม
+filterTimeOptions();
 updateUI();
 </script>
 
