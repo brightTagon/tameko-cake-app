@@ -152,13 +152,16 @@ button:hover {
         ราคารวม: <span id="total">25</span> บาท
     </div>
 
-    <!-- แสดงวันที่ -->
+    <!-- วันที่สั่ง (แสดงอัตโนมัติ) -->
     <div class="total">
-        วันที่สั่งซื้อ: <span id="orderDate"></span><br>
-        วันที่รับสินค้า: <span id="deliveryDate"></span>
+        วันที่สั่งซื้อ: <span id="orderDate"></span>
     </div>
 
-    <!-- ข้อความสินค้าเร่งด่วน -->
+    <!-- เลือกวันรับสินค้า -->
+    <label>เลือกวันที่รับสินค้า (ถ้าไม่เลือก จะเป็นวันรุ่งขึ้น)</label>
+    <input type="date" id="deliveryDate">
+
+    <!-- แจ้งเร่งด่วน -->
     <div class="urgent">
         🚨 หากต้องการสินค้าเร่งด่วน กรุณาโทร 086-789-4266
     </div>
@@ -187,11 +190,15 @@ const itemSelect = document.getElementById("itemSelect");
 const quantity = document.getElementById("quantity");
 const total = document.getElementById("total");
 const setImage = document.getElementById("setImage");
+const deliveryInput = document.getElementById("deliveryDate");
 
 // ===== วันที่ =====
 const today = new Date();
 const tomorrow = new Date();
 tomorrow.setDate(today.getDate() + 1);
+
+// ป้องกันเลือกย้อนหลัง
+deliveryInput.min = today.toISOString().split("T")[0];
 
 function formatDate(date) {
     return date.toLocaleDateString("th-TH", {
@@ -202,7 +209,6 @@ function formatDate(date) {
 }
 
 document.getElementById("orderDate").innerText = formatDate(today);
-document.getElementById("deliveryDate").innerText = formatDate(tomorrow);
 
 // ===== ระบบเดิม =====
 function updateImage() {
@@ -251,20 +257,6 @@ function updateItems() {
             "เค้กไข่กล้วยหอม ช็อคชิพอัลมอน"
         ];
     }
-    else if (setSelect.value == "30") {
-        if (categorySelect.value == "b1") {
-            options = ["ส้ม","ชอคโกแลต","ฝอยทอง","สตอเบอรี่","คละรส"];
-        } else if (categorySelect.value == "b2") {
-            options = ["ไก่หยอง","ไส้กรอก","ถั่วแดง","เผือก","ถั่วดำ"];
-        }
-    }
-    else if (setSelect.value == "35") {
-        if (categorySelect.value == "c1") options = ["ขนมไข่ไส้ครีม 2 ชิ้น"];
-        if (categorySelect.value == "c2") options = ["เค้กไข่ 2 ชิ้น"];
-        if (categorySelect.value == "c3") options = ["เค้กไข่ 1 ชิ้น + ขนมปัง 1 ชิ้น"];
-        if (categorySelect.value == "c4") options = ["เค้กหน้านิ่ม 1 ชิ้น + ขนมปัง 1 ชิ้น"];
-        if (categorySelect.value == "c5") options = ["เค้กหน้านิ่ม + เค้กไข่"];
-    }
 
     options.forEach(item => {
         const option = document.createElement("option");
@@ -291,9 +283,14 @@ function submitOrder() {
         return;
     }
 
+    // ถ้าไม่เลือกวัน → ใช้วันรุ่งขึ้น
+    let deliveryDate = deliveryInput.value 
+        ? new Date(deliveryInput.value) 
+        : tomorrow;
+
     document.getElementById("successMessage").innerText =
         "🎉 สั่งซื้อสำเร็จ!\nวันที่สั่ง: " + formatDate(today) +
-        "\nวันที่รับสินค้า: " + formatDate(tomorrow);
+        "\nวันที่รับสินค้า: " + formatDate(deliveryDate);
 }
 
 setSelect.addEventListener("change", () => {
@@ -302,7 +299,6 @@ setSelect.addEventListener("change", () => {
     calculateTotal();
 });
 
-categorySelect.addEventListener("change", updateItems);
 quantity.addEventListener("input", calculateTotal);
 
 updateCategory();
