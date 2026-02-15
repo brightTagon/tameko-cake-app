@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweet Bakery Shop</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #fff1eb, #ffe4e1);
+    margin: 0;
+}
+
+header {
+    background: #068223;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    font-size: 24px;
+}
+
+.container {
+    width: 90%;
+    max-width: 500px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #ff6f61;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+textarea {
+    resize: none;
+    height: 70px;
+}
+
+button {
+    margin-top: 20px;
+    padding: 12px;
+    width: 100%;
+    background: #ff6f61;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #ff3b2f;
+}
+
+.total {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #d63384;
+}
+
+.preview img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.qr-section {
+    margin-top: 20px;
+    text-align: center;
+    background: #fff6f8;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.qr-section img {
+    width: 200px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.success {
+    color: green;
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.urgent {
+    margin-top: 20px;
+    padding: 12px;
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    color: #856404;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    🥐 Sweet Bakery Shop 🍰
+</header>
+
+<div class="container">
+    <h2>สั่งขนมของคุณ</h2>
+
+    <label>เลือกเซต</label>
+    <select id="setSelect">
+        <option value="25">Set A - 25 บาท</option>
+        <option value="30">Set B - 30 บาท</option>
+        <option value="35">Set C - 35 บาท</option>
+    </select>
+
+    <div class="preview">
+        <img id="setImage" src="">
+    </div>
+
+    <label>เลือกประเภท</label>
+    <select id="categorySelect"></select>
+
+    <label>เลือกเมนู</label>
+    <select id="itemSelect"></select>
+
+    <label>จำนวน</label>
+    <input type="number" id="quantity" value="1" min="1">
+
+    <div class="total">
+        ราคารวม: <span id="total">25</span> บาท
+    </div>
+
+    <!-- วันที่สั่ง (แสดงอัตโนมัติ) -->
+    <div class="total">
+        วันที่สั่งซื้อ: <span id="orderDate"></span>
+    </div>
+
+    <!-- เลือกวันรับสินค้า -->
+    <label>เลือกวันที่รับสินค้า (ถ้าไม่เลือก จะเป็นวันรุ่งขึ้น)</label>
+    <input type="date" id="deliveryDate">
+
+    <!-- แจ้งเร่งด่วน -->
+    <div class="urgent">
+        🚨 หากต้องการสินค้าเร่งด่วน กรุณาโทร 086-789-4266
+    </div>
+
+    <div class="qr-section">
+        <h3>📲 สแกนเพื่อชำระเงิน</h3>
+        <img src="static/qrcode.jfif" alt="QR Code">
+        <p>กรุณาสแกน QR และอัปโหลดสลิปด้านล่าง</p>
+    </div>
+
+    <label>ที่อยู่จัดส่ง</label>
+    <textarea id="location" placeholder="กรอกที่อยู่ของคุณ"></textarea>
+
+    <label>อัปโหลดสลิปการโอนเงิน</label>
+    <input type="file" id="paymentSlip" accept="image/*,.pdf">
+
+    <button onclick="submitOrder()">ยืนยันการสั่งซื้อ</button>
+
+    <div class="success" id="successMessage"></div>
+</div>
+
+<script>
+const setSelect = document.getElementById("setSelect");
+const categorySelect = document.getElementById("categorySelect");
+const itemSelect = document.getElementById("itemSelect");
+const quantity = document.getElementById("quantity");
+const total = document.getElementById("total");
+const setImage = document.getElementById("setImage");
+const deliveryInput = document.getElementById("deliveryDate");
+
+// ===== วันที่ =====
+const today = new Date();
+const tomorrow = new Date();
+tomorrow.setDate(today.getDate() + 1);
+
+// ป้องกันเลือกย้อนหลัง
+deliveryInput.min = today.toISOString().split("T")[0];
+
+function formatDate(date) {
+    return date.toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
+}
+
+document.getElementById("orderDate").innerText = formatDate(today);
+
+// ===== ระบบเดิม =====
+function updateImage() {
+    if (setSelect.value == "25") {
+        setImage.src = "static/A.jfif";
+    } else if (setSelect.value == "30") {
+        setImage.src = "static/B.jfif";
+    } else {
+        setImage.src = "static/C.jfif";
+    }
+}
+
+function updateCategory() {
+    categorySelect.innerHTML = "";
+    itemSelect.innerHTML = "";
+
+    if (setSelect.value == "30") {
+        categorySelect.innerHTML = `
+            <option value="b1">B.1 เค้กหน้านิ่ม</option>
+            <option value="b2">B.2 ขนมปัง</option>
+        `;
+    }
+    else if (setSelect.value == "35") {
+        categorySelect.innerHTML = `
+            <option value="c1">C.1 ขนมไข่ไส้ครีม 2 ชิ้น</option>
+            <option value="c2">C.2 เค้กไข่ 2 ชิ้น</option>
+            <option value="c3">C.3 เค้กไข่ 1 ชิ้น + ขนมปัง 1 ชิ้น</option>
+            <option value="c4">C.4 เค้กหน้านิ่ม 1 ชิ้น + ขนมปัง 1 ชิ้น</option>
+            <option value="c5">C.5 เค้กหน้านิ่ม + เค้กไข่</option>
+        `;
+    } else {
+        categorySelect.innerHTML = `<option value="">-</option>`;
+    }
+
+    updateItems();
+}
+
+function updateItems() {
+    itemSelect.innerHTML = "";
+    let options = [];
+
+    if (setSelect.value == "25") {
+        options = [
+            "เค้กไข่เนยสด",
+            "เค้กไข่ช็อคชิพ",
+            "เค้กไข่กล้วยหอม ช็อคชิพอัลมอน"
+        ];
+    }
+
+    options.forEach(item => {
+        const option = document.createElement("option");
+        option.textContent = item;
+        itemSelect.appendChild(option);
+    });
+}
+
+function calculateTotal() {
+    total.innerText = setSelect.value * quantity.value;
+}
+
+function submitOrder() {
+    const location = document.getElementById("location").value;
+    const paymentSlip = document.getElementById("paymentSlip").files[0];
+
+    if (!location) {
+        alert("กรุณากรอกที่อยู่จัดส่ง");
+        return;
+    }
+
+    if (!paymentSlip) {
+        alert("กรุณาอัปโหลดสลิปการโอนเงิน");
+        return;
+    }
+
+    // ถ้าไม่เลือกวัน → ใช้วันรุ่งขึ้น
+    let deliveryDate = deliveryInput.value 
+        ? new Date(deliveryInput.value) 
+        : tomorrow;
+
+    document.getElementById("successMessage").innerText =
+        "🎉 สั่งซื้อสำเร็จ!\nวันที่สั่ง: " + formatDate(today) +
+        "\nวันที่รับสินค้า: " + formatDate(deliveryDate);
+}
+
+setSelect.addEventListener("change", () => {
+    updateCategory();
+    updateImage();
+    calculateTotal();
+});
+
+quantity.addEventListener("input", calculateTotal);
+
+updateCategory();
+updateImage();
+calculateTotal();
+</script>
+
+</body>
+</html>
